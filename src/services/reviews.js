@@ -5,7 +5,7 @@ const reviewsRouter = Router();
 
 reviewsRouter.get("/", async (req, res, next) => {
   try {
-    const result = await pool.query(`SELECT * FROM reviews;`);
+    const result = await pool.query(`SELECT * FROM reviews;`); //`SELECT * FROM reviews WHERE review_id=$1 UNION SELECT * FROM products WHERE `
     res.send(result.rows);
   } catch (error) {
     res.status(500).send({ message: error.message });
@@ -15,7 +15,7 @@ reviewsRouter.get("/", async (req, res, next) => {
 reviewsRouter.get("/:review_id", async (req, res, next) => {
   try {
     const result = await pool.query(
-      `SELECT * FROM reviews WHERE review_id=$1;`,
+      `SELECT * FROM reviews WHERE review_id=$1;`, 
       [req.params.review_id]
     );
     if (result.rows[0]) {
@@ -31,8 +31,8 @@ reviewsRouter.get("/:review_id", async (req, res, next) => {
 reviewsRouter.post("/", async (req, res, next) => {
   try {
     const result = await pool.query(
-      `INSERT INTO reviews(first_name,last_name) VALUES($1,$2) RETURNING *;`,
-      [req.body.first_name, req.body.last_name]
+      `INSERT INTO reviews(comment,rate,product_id) VALUES($1,$2,$3) RETURNING *;`,
+      [req.body.comment, req.body.rate, req.body.product_id]
     );
     res.send(result.rows[0]);
   } catch (error) {

@@ -32,11 +32,28 @@ productsRouter.get("/:product_id", async (req, res, next) => {
   }
 });
 
+productsRouter.get("/:product_id/reviews", async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM products WHERE product_id=$1 UNION SELECT reviews WHERE product_id=$1;`
+    );
+    res.send(result.rows);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
 productsRouter.post("/", async (req, res, next) => {
   try {
     const result = await pool.query(
-      `INSERT INTO products(first_name,last_name) VALUES($1,$2) RETURNING *;`,
-      [req.body.first_name, req.body.last_name]
+      `INSERT INTO products(name_,description_,image_url,price,category) VALUES($1,$2,$3,$4,$5) RETURNING *;`,
+      [
+        req.body.name_,
+        req.body.description_,
+        req.body.image_url,
+        req.body.price,
+        req.body.category
+      ]
     );
     res.send(result.rows[0]);
   } catch (error) {
