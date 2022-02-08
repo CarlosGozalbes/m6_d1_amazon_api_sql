@@ -1,5 +1,9 @@
 import { Router } from "express";
 import pool from "../utils/db/connect.js";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import multer from "multer";
+
 
 const productsRouter = Router();
 
@@ -15,7 +19,7 @@ productsRouter.get("/", async (req, res, next) => {
 productsRouter.get("/:product_id", async (req, res, next) => {
   try {
     const result = await pool.query(
-      `SELECT * FROM products WHERE product_id=$1;`,
+      `SELECT * FROM products WHERE product_id=$1;`,  //`SELECT product_id, name, description, brand, image_url, price, category, review_id, comment, rate FROM products INNER JOIN reviews USING(product_id) WHERE product_id=$1`
       [req.params.product_id]
     );
     if (result.rows[0]) {
@@ -82,5 +86,26 @@ productsRouter.delete("/:product_id", async (req, res, next) => {
     res.status(500).send({ message: error.message });
   }
 });
+
+productsRouter.post("/:product_id",multer({
+    storage: new CloudinaryStorage({ cloudinary, params: { folder: "amazon" } }),
+  }).single("image_url"), async (req, res, next) => {
+  try {
+      console.log(req.file.filename);
+    const image_url = req.file.path
+    
+    const insertData = "INSERT INTO products(image_url)VALUES(?)";
+    db.query(insertData, [image_url], (err, result) => {
+      if (err) throw err;
+      console.log("file uploaded");
+    });
+  } catch (error) {
+      next(error)
+  }
+  }
+    
+);
+
+
 
 export default productsRouter;
