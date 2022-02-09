@@ -3,7 +3,8 @@ import Product from "./model.js";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import multer from "multer";
-
+import { Op } from "sequelize";
+import Review from "../reviews/model.js";
 
 const productsRouter = Router();
 
@@ -12,23 +13,11 @@ productsRouter.get("/", async (req, res, next) => {
     const products = await Product.findAll({
       order: [
         ["name", "DESC"],
-        ["description", "ASC"]
+        ["description", "ASC"],
       ],
+      include:[Review]
     });
     res.send(products);
-  } catch (error) {
-    res.status(500).send({ error: error.message });
-  }
-});
-
-productsRouter.get("/:product_id", async (req, res, next) => {
-  try {
-    const singleProduct = await Product.findByPk(req.params.id);
-    if (singleProduct) {
-      res.send(singleProduct);
-    } else {
-      res.status(404).send({ error: "No such product" });
-    }
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
@@ -49,13 +38,14 @@ productsRouter.get("/search", async (req, res, next) => {
             description: {
               [Op.iLike]: `%${req.query.q}%`,
             },
+          },
+          {
             price: {
-              [Op.between]: [req.query.f, req.query.t],
+              [Op.between]: [req.query.f || 0, req.query.t || Infinity],
             },
           },
         ],
       },
-      
     });
     res.send(products);
   } catch (error) {
@@ -63,6 +53,18 @@ productsRouter.get("/search", async (req, res, next) => {
   }
 });
 
+productsRouter.get("/:product_id", async (req, res, next) => {
+  try {
+    const singleProduct = await Product.findByPk(req.params.id);
+    if (singleProduct) {
+      res.send(singleProduct);
+    } else {
+      res.status(404).send({ error: "No such product" });
+    }
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
 
 /* productsRouter.get("/:product_id/reviews", async (req, res, next) => {
   try {
@@ -163,7 +165,5 @@ productsRouter.delete("/:product_id", async (req, res, next) => {
   }
   }   
 ); */
-
-
 
 export default productsRouter;

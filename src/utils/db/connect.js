@@ -7,6 +7,7 @@ const sequelize = new Sequelize(POSTGRESQL_URI, { dialect: "postgres" });
 export const authenticateDatabase = async () => {
   try {
     await sequelize.authenticate();
+    await sequelize.sync({ alter: true, logging: false });
     console.log("Connection has been established successfully.");
   } catch (error) {
     console.error("Unable to connect to the database:", error);

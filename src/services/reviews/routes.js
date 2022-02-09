@@ -1,6 +1,6 @@
 import { Router } from "express";
 import Product from "../products/model.js";
-import { Op } from "sequelize";
+
 import Review from "./model.js";
 
 const reviewsRouter = Router();
