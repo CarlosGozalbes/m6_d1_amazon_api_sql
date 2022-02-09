@@ -1,5 +1,5 @@
 import { Router } from "express";
-import pool from "../utils/db/connect.js";
+import Product from "./model.js";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import multer from "multer";
@@ -9,30 +9,62 @@ const productsRouter = Router();
 
 productsRouter.get("/", async (req, res, next) => {
   try {
-    const result = await pool.query(`SELECT * FROM products;`);
-    res.send(result.rows);
+    const products = await Product.findAll({
+      order: [
+        ["name", "DESC"],
+        ["description", "ASC"]
+      ],
+    });
+    res.send(products);
   } catch (error) {
-    res.status(500).send({ message: error.message });
+    res.status(500).send({ error: error.message });
   }
 });
 
 productsRouter.get("/:product_id", async (req, res, next) => {
   try {
-    const result = await pool.query(
-      `SELECT * FROM products WHERE product_id=$1;`,  //`SELECT product_id, name, description, brand, image_url, price, category, review_id, comment, rate FROM products INNER JOIN reviews USING(product_id) WHERE product_id=$1`
-      [req.params.product_id]
-    );
-    if (result.rows[0]) {
-      res.send(result.rows);
+    const singleProduct = await Product.findByPk(req.params.id);
+    if (singleProduct) {
+      res.send(singleProduct);
     } else {
-      res.status(404).send({ message: "No such product." });
+      res.status(404).send({ error: "No such product" });
     }
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+productsRouter.get("/search", async (req, res, next) => {
+  try {
+    console.log({ query: req.query });
+    const products = await Product.findAll({
+      where: {
+        [Op.or]: [
+          {
+            name: {
+              [Op.iLike]: `%${req.query.q}%`,
+            },
+          },
+          {
+            description: {
+              [Op.iLike]: `%${req.query.q}%`,
+            },
+            price: {
+              [Op.between]: [req.query.f, req.query.t],
+            },
+          },
+        ],
+      },
+      
+    });
+    res.send(products);
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
 });
 
-productsRouter.get("/:product_id/reviews", async (req, res, next) => {
+
+/* productsRouter.get("/:product_id/reviews", async (req, res, next) => {
   try {
     const result = await pool.query(
       `SELECT * FROM products WHERE product_id=$1 UNION SELECT reviews WHERE product_id=$1;`
@@ -41,21 +73,12 @@ productsRouter.get("/:product_id/reviews", async (req, res, next) => {
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
-});
+}); */
 
 productsRouter.post("/", async (req, res, next) => {
   try {
-    const result = await pool.query(
-      `INSERT INTO products(name_,description_,image_url,price,category) VALUES($1,$2,$3,$4,$5) RETURNING *;`,
-      [
-        req.body.name_,
-        req.body.description_,
-        req.body.image_url,
-        req.body.price,
-        req.body.category
-      ]
-    );
-    res.send(result.rows[0]);
+    const newProduct = await Product.create(req.body);
+    res.send(newProduct);
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
@@ -75,7 +98,7 @@ productsRouter.post("/", async (req, res, next) => {
 
 //dynamic sql update query generate
 
-productsRouter.put("/:product_id", async (req, res, next) => {
+/* productsRouter.put("/:product_id", async (req, res, next) => {
   try {
     // first_name=$1,last_name=$2
     const query = `UPDATE products SET ${Object.keys(req.body)
@@ -91,20 +114,39 @@ productsRouter.put("/:product_id", async (req, res, next) => {
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
+}); */
+
+productsRouter.put("/:product_id", async (req, res, next) => {
+  try {
+    //
+    const [success, updateProduct] = await Product.update(req.body, {
+      where: { id: req.params.id },
+      returning: true,
+    });
+    if (success) {
+      res.send(updateProduct);
+    } else {
+      res.status(404).send({ message: "no such product" });
+    }
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
 });
 
 productsRouter.delete("/:product_id", async (req, res, next) => {
   try {
-    await pool.query(`DELETE FROM products WHERE product_id=$1;`, [
-      req.params.product_id,
-    ]);
+    await Product.destroy({
+      where: {
+        id: req.params.id,
+      },
+    });
     res.status(204).send();
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
 });
 
-productsRouter.post("/:product_id",multer({
+/* productsRouter.post("/:product_id",multer({
     storage: new CloudinaryStorage({ cloudinary, params: { folder: "amazon" } }),
   }).single("image_url"), async (req, res, next) => {
   try {
@@ -119,9 +161,8 @@ productsRouter.post("/:product_id",multer({
   } catch (error) {
       next(error)
   }
-  }
-    
-);
+  }   
+); */
 
 
 
