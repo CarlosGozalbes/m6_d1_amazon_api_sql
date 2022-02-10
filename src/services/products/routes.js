@@ -4,18 +4,24 @@ import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import multer from "multer";
 import { Op } from "sequelize";
-import Review from "../reviews/model.js";
+import Review from "./reivews.model.js";
+import Category from "./categories.model.js";
+import User from "../users/model.js";
 
 const productsRouter = Router();
 
 productsRouter.get("/", async (req, res, next) => {
   try {
+    const { offset = 0, limit = 9 } = req.query;
+    const totalBlog = await Product.count({});
     const products = await Product.findAll({
+      include: [User, Review, Category],
+      offset,
+      limit,
       order: [
         ["name", "DESC"],
         ["description", "ASC"],
       ],
-      include:[Review]
     });
     res.send(products);
   } catch (error) {
@@ -80,9 +86,21 @@ productsRouter.get("/:product_id", async (req, res, next) => {
 productsRouter.post("/", async (req, res, next) => {
   try {
     const newProduct = await Product.create(req.body);
-    res.send(newProduct);
+    if (req.body.categories) {
+      for await (const categoryName of req.body.categories) {
+        const category = await Category.create({ name: categoryName });
+        await newProduct.addCategory(category, {
+          through: { selfGranted: false },
+        });
+      }
+    }
+    const productWithCategory = await Product.findOne({
+      where: { id: newProduct.id },
+      include: [Category, User, Review],
+    });
+    res.send(productWithCategory);
   } catch (error) {
-    res.status(500).send({ message: error.message });
+    res.status(500).send({ error: error.message });
   }
 });
 
@@ -165,5 +183,103 @@ productsRouter.delete("/:product_id", async (req, res, next) => {
   }
   }   
 ); */
+
+productsRouter.get("/stats", async (req, res, next) => {
+  try {
+    const stats = await Review.findAll({
+      // select list : what you want to get ?
+      attributes: [
+        [
+          sequelize.cast(
+            // cast function converts datatype
+            sequelize.fn("count", sequelize.col("product_id")), // SELECT COUNT(blog_id) AS total_comments
+            "integer"
+          ),
+          "numberOfReviews",
+        ],
+      ],
+      group: ["product_id", "product.id", "product.review.id"],
+      include: [{ model: Product, include: [Review] }], // <-- nested include
+    });
+    res.send(stats);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+})
+
+productsRouter.post("/:id/reviews", async (req, res, next) => {
+  try {
+    const newReview = await Review.create({
+      ...req.body,
+      productId: req.params.id,
+    });
+    res.send(newReview);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+productsRouter.delete("/:id/reviews/:reviewId", async (req, res, next) => {
+  try {
+    const product = await Product.findByPk(req.params.id);
+    if (product) {
+      const review = await Review.findByPk(req.params.categoryId);
+
+      await product.removeCategory(review);
+
+      const productWithReview = await product.findOne({
+        where: { id: req.params.id },
+        include: [Category, User, Review],
+      });
+      res.send(productWithReview);
+    } else {
+      res.status(404).send({ error: "Product not found" });
+    }
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+
+productsRouter.post("/:id/category", async (req, res, next) => {
+  try {
+    
+    const product = await product.findByPk(req.params.id);
+    if (product) {
+     
+      const category = await Category.create(req.body);
+   
+      await product.addCategory(category, { through: { selfGranted: false } });
+    
+      res.send(category);
+    } else {
+      res.status(404).send({ error: "Product not found" });
+    }
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+productsRouter.delete("/:id/category/:categoryId", async (req, res, next) => {
+  try {
+    const product = await Product.findByPk(req.params.id);
+    if (product) {
+      
+      const category = await Category.findByPk(req.params.categoryId);
+      
+      await product.removeCategory(category);
+     
+      const productWithCategory = await product.findOne({
+        where: { id: req.params.id },
+        include: [Category, User, Review],
+      });
+      res.send(productWithCategory);
+    } else {
+      res.status(404).send({ error: "Product not found" });
+    }
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
 
 export default productsRouter;

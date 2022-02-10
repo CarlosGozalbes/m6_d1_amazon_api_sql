@@ -4,7 +4,9 @@ import sequelize from "../../utils/db/connect.js";
 
 import Sequelize from "sequelize";
 
-import Product from "../products/model.js";
+import Product from "./model.js";
+
+import User from "../users/model.js";
 
 const Review = sequelize.define(
   "review",
@@ -34,5 +36,9 @@ Product.hasMany(Review, {
 });
 
 Review.belongsTo(Product);
+
+
+Review.belongsTo(User, { through: "user_reviews" });
+User.belongsToMany(Review, { through: "user_reviews" });
 
 export default Review;

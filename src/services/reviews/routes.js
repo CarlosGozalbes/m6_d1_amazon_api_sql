@@ -1,7 +1,7 @@
 import { Router } from "express";
 import Product from "../products/model.js";
 
-import Review from "./model.js";
+import Review from "../products/reivews.model.js";
 
 const reviewsRouter = Router();
 

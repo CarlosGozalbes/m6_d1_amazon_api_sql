@@ -1,6 +1,7 @@
 import express from "express";
 import productsRoutes from "./services/products/routes.js";
 import reviewsRoutes from "./services/reviews/routes.js";
+import usersRoutes from "./services/users/routes.js";
 import { authenticateDatabase } from "./utils/db/connect.js";
 
 const server = express()
@@ -11,6 +12,7 @@ server.use(express.json());
 
 server.use("/products", productsRoutes);
 server.use("/reviews", reviewsRoutes) 
+server.use("/users", usersRoutes); 
 
 server.listen(PORT, () => {
   authenticateDatabase()
