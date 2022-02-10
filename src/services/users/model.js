@@ -4,6 +4,7 @@ import sequelize from "../../utils/db/connect.js";
 
 import Sequelize from "sequelize";
 
+import Product from "../products/model.js";
 // model definition
 
 /**
@@ -47,5 +48,11 @@ const User = sequelize.define(
   },
   { underscored: true } // this attribute is converting camelCase to snake_case
 );
+
+User.hasMany(Product, {
+  onDelete: "CASCADE", // when author is deleted , deletes all blogs
+});
+
+Product.belongsTo(User);
 
 export default User;

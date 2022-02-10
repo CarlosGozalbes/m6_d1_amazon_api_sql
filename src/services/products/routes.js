@@ -244,7 +244,7 @@ productsRouter.delete("/:id/reviews/:reviewId", async (req, res, next) => {
 productsRouter.post("/:id/category", async (req, res, next) => {
   try {
     
-    const product = await product.findByPk(req.params.id);
+    const product = await Product.findByPk(req.params.id);
     if (product) {
      
       const category = await Category.create(req.body);
