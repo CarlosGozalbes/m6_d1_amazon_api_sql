@@ -27,6 +27,10 @@ const Review = sequelize.define(
         isInt: true,
       },
     },
+    user_id: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
   },
   { underscored: true }
 );

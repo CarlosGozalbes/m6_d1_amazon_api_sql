@@ -4,6 +4,7 @@ import sequelize from "../../utils/db/connect.js";
 
 import Sequelize from "sequelize";
 
+import User from "../users/model.js";
 import Product from "./model.js";
 
 const Cart = sequelize.define(
@@ -18,5 +19,6 @@ const Cart = sequelize.define(
   },
   { underscored: true }
 );
+
 
 export default Cart;
