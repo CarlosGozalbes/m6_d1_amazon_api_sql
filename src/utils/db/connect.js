@@ -1,8 +1,8 @@
 import Sequelize from "sequelize";
 
-const { POSTGRESQL_URI } = process.env;
+const { DATABASE_URL } = process.env;
 
-const sequelize = new Sequelize(POSTGRESQL_URI, { dialect: "postgres" });
+const sequelize = new Sequelize(DATABASE_URL, { dialect: "postgres" });
 
 export const authenticateDatabase = async () => {
   try {
