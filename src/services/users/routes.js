@@ -134,12 +134,12 @@ usersRoutes.post('/:userId/cart' , async(req, res, next) => {
     }
   })
   //delete from cart
-usersRoutes.delete("/:userId/cart/:productId", async (req, res, next) => {
+usersRoutes.delete("/:userId/cart/:cartId", async (req, res, next) => {
   try {
     await Cart.destroy({
       where: {
-        user_id: req.params.userId,
-        product_id: req.params.productId
+        id: req.params.cartId,
+      
       },
     });
     res.status(204).send();
