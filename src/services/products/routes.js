@@ -7,6 +7,7 @@ import { Op } from "sequelize";
 import Review from "./reivews.model.js";
 import Category from "./categories.model.js";
 import User from "../users/model.js";
+import Cart from "./cart.model.js";
 
 const productsRouter = Router();
 
@@ -42,6 +43,11 @@ productsRouter.get("/search", async (req, res, next) => {
           },
           {
             description: {
+              [Op.iLike]: `%${req.query.q}%`,
+            },
+          },
+          {
+            category: {
               [Op.iLike]: `%${req.query.q}%`,
             },
           },
@@ -281,5 +287,8 @@ productsRouter.delete("/:id/category/:categoryId", async (req, res, next) => {
     res.status(500).send({ error: error.message });
   }
 });
+
+
+
 
 export default productsRouter;

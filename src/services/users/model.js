@@ -6,7 +6,7 @@ import Sequelize from "sequelize";
 
 import Product from "../products/model.js";
 // model definition
-
+import Cart from "../products/cart.model.js";
 /**
  * its created if this module (current file that you are looking) is imported to anywhere
  * that is executed
@@ -54,5 +54,8 @@ User.hasMany(Product, {
 });
 
 Product.belongsTo(User);
+
+Cart.belongsTo(User);
+Cart.belongsTo(Product);
 
 export default User;
